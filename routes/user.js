@@ -54,13 +54,20 @@ router.get("/Courses",userMiddleware,async(req,res)=>{
     
 });
 // enrolled in course
-router.post("/courses/:courseId",async(req,res)=>{
+router.post("/courses/:courseId",userMiddleware, async(req,res)=>{
      const courseId = req.params.courseId;
      const username = req.headers.username;
      
      try{
-        await User.updateOne({username:username},{"$push":{purchasedCourse:courseId}});
-        res.send("Course purches successfully");
+        const isFind = await User.find({username:username});
+        console.log(isFind)
+        if(isFind.username){
+            await User.updateOne({username:username},{"$push":{purchasedCourse:courseId}});
+            res.send("Course purches successfully");
+        }
+        else{
+            res.send("user not matched")
+        }
      }
      catch(error){
         res.send(error.message)
@@ -70,6 +77,12 @@ router.post("/courses/:courseId",async(req,res)=>{
 //see the enrolled course
 router.get("/purchasedcourse",userMiddleware,async(req,res)=>{
     const user = await User.findOne({username:req.headers.username})
-    const courses = Course.find({_id:{"$in":user.purchasedCourse}})
+    const courses = Course.find({_id:{"$in":user.purchasedCourse}});
+    res.send("course Purchased successfully");
+})
+
+router.use((error,req,res,next)=>{
+    res.send(error)
+    next()
 })
 module.exports = router;
